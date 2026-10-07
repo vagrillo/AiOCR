@@ -1,8 +1,14 @@
 ; Inno Setup script for the AiOCR Windows installer.
 ; Built by CI (ISCC.exe) against the onedir PyInstaller output in dist\AiOCR.
+; The version comes from the git tag via /DAppVersion (fallback: 1.0.0);
+; PyInstaller executables carry no VERSIONINFO resource, so deriving the
+; version from the exe is not possible.
+
+#ifndef AppVersion
+#define AppVersion "1.0.0"
+#endif
 
 #define AppName "AiOCR"
-#define AppVersion GetFileVersion("dist\AiOCR\AiOCR.exe")
 #define AppPublisher "AiOCR contributors"
 #define AppExeName "AiOCR.exe"
 

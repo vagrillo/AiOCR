@@ -59,9 +59,11 @@ jobs:
       - name: Build Windows installer (Inno Setup)
         if: matrix.os == 'windows-latest'
         shell: cmd
+        env:
+          APP_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '1.0.0' }}
         run: |
           where iscc || choco install innosetup -y --no-progress
-          iscc build\AiOCR.iss
+          iscc /DAppVersion=%APP_VERSION:v=% build\AiOCR.iss
 
       - name: Zip artifacts
         shell: bash
