@@ -1,0 +1,23 @@
+# AiOCR core dependencies (all platforms).
+#
+# PyTorch is installed separately so each platform can pick the right build:
+#   requirements-macos.txt        - Apple Silicon / Intel (MPS backend)
+#   requirements-cuda.txt         - modern NVIDIA GPUs (CUDA 12.8)
+#   requirements-cuda-legacy.txt  - GTX 10xx/16xx class GPUs (CUDA 12.6)
+#
+#   pip install -r requirements.txt -r requirements-cuda.txt
+
+PySide6>=6.6
+transformers==4.57.1
+huggingface_hub>=0.30
+accelerate>=0.30
+bitsandbytes>=0.45
+safetensors>=0.4
+pymupdf>=1.24
+pillow>=10.0
+einops>=0.8
+addict>=2.4
+easydict>=1.13
+tqdm>=4.66
+requests>=2.31
+markdown>=3.5

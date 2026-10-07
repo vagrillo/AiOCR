@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Model storage and conversion output (created at runtime)
+models/
+output/
+work/
+
+# Build artifacts
+build/pyinstaller/
+dist/
+dist_portable/
+dist_installer/
+*.spec.bak
+
+# Local dev/test output
+build/*.png
+build/smoke_work/
+build/convert_work/
+
+
+# Packaging / OS noise
+.DS_Store
+Thumbs.db
+*.log
+
+# Local test files (the distributed sample lives in assets/sample/)
+/test*.pdf

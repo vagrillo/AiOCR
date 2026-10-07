@@ -1,0 +1,108 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.os }} (${{ matrix.torch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            torch: cpu
+          - os: macos-14
+            torch: mps
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Install PyTorch (macOS, MPS)
+        if: matrix.os == 'macos-14'
+        run: pip install -r requirements-macos.txt
+
+      - name: Install PyTorch (Windows, CPU bundle)
+        if: matrix.os == 'windows-latest' && matrix.torch == 'cpu'
+        run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Build portable onefile executable
+        shell: bash
+        env:
+          AIOCR_ONEDIR: "0"
+        run: pyinstaller build/AiOCR.spec --noconfirm --distpath dist_portable
+
+      - name: Build onedir for the Windows installer
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        env:
+          AIOCR_ONEDIR: "1"
+        run: pyinstaller build/AiOCR.spec --noconfirm --distpath dist
+
+      - name: Build Windows installer (Inno Setup)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          where iscc || choco install innosetup -y --no-progress
+          iscc build\AiOCR.iss
+
+      - name: Zip artifacts
+        shell: bash
+        run: |
+          cd dist_portable
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            7z a AiOCR-windows-portable.zip AiOCR.exe
+          else
+            zip -y -r AiOCR-macos-arm64.zip AiOCR
+          fi
+
+      - name: Upload portable binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}-portable
+          path: dist_portable/AiOCR*
+
+      - name: Upload Windows installer
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: dist_installer/AiOCR-windows-installer.exe
+
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: release
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release/AiOCR-windows-portable.zip
+            release/AiOCR-windows-installer.exe
+            release/AiOCR-macos-arm64.zip

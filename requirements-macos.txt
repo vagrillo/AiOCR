@@ -1,0 +1,5 @@
+# PyTorch for macOS (MPS backend for Apple Silicon M1/M2/M3/M4).
+# Install together with requirements.txt:
+#   pip install -r requirements.txt -r requirements-macos.txt
+torch>=2.4
+torchvision>=0.19

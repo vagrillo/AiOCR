@@ -1,0 +1,8 @@
+# PyTorch for modern NVIDIA GPUs (RTX 20xx and newer, CUDA 12.8 wheels).
+# Install together with requirements.txt:
+#   pip install -r requirements.txt -r requirements-cuda.txt
+#
+# Note: these wheels require sm_70 (Volta) or newer.
+--index-url https://download.pytorch.org/whl/cu128
+torch>=2.7
+torchvision>=0.22
