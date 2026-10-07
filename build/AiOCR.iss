@@ -1,8 +1,14 @@
 ; Inno Setup script for the AiOCR Windows installer.
 ; Built by CI (ISCC.exe) against the onedir PyInstaller output in dist\AiOCR.
+;
+; ISCC resolves paths relative to this .iss file's folder (build/), so the
+; PyInstaller output one level up is addressed as ..\dist.
+;
 ; The version comes from the git tag via /DAppVersion (fallback: 1.0.0);
 ; PyInstaller executables carry no VERSIONINFO resource, so deriving the
 ; version from the exe is not possible.
+
+#define SourceDir "..\dist\AiOCR"
 
 #ifndef AppVersion
 #define AppVersion "1.0.0"
@@ -21,7 +27,7 @@ DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 OutputBaseFilename=AiOCR-windows-installer
-OutputDir=..\dist_installer
+OutputDir=..\..\dist_installer
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
@@ -33,7 +39,7 @@ UninstallDisplayIcon={app}\{#AppExeName}
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}";
 
 [Files]
-Source: "dist\AiOCR\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
