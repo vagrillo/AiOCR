@@ -87,6 +87,7 @@ jobs:
         with:
           name: windows-installer
           path: dist_installer/AiOCR-windows-installer.exe
+          if-no-files-found: error
 
   release:
     name: Publish release
