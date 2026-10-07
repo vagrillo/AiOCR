@@ -34,12 +34,15 @@ imgs = pdf_to_images(doc, workdir, dpi=150, page_range=(a, b))
 print(f"Rendered {len(imgs)} pages in {time.time() - t0:.1f}s")
 
 state = {"last": 0.0, "chars": 0}
+stream_log = open(ROOT / "build" / "stream.log", "w", encoding="utf-8")
 
 
 def on_text(chunk: str) -> None:
     state["chars"] += len(chunk)
+    stream_log.write(chunk)
+    stream_log.flush()
     now = time.time()
-    if now - state["last"] > 3:
+    if now - state["last"] > 15:
         state["last"] = now
         print(f"  ... {state['chars']} chars generated", flush=True)
 

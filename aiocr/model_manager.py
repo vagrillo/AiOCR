@@ -61,6 +61,40 @@ def _write_marker(model_dir: Path) -> None:
     )
 
 
+def _expected_sha256() -> Dict[str, str]:
+    """Filename -> LFS sha256 for the weight files, from the HF API."""
+    from huggingface_hub import HfApi
+
+    info = HfApi().model_info(MODEL_REPO_ID, files_metadata=True)
+    out: Dict[str, str] = {}
+    for f in info.siblings or []:
+        if f.lfs and f.lfs.sha256 and f.rfilename.endswith(".safetensors"):
+            out[f.rfilename] = f.lfs.sha256
+    return out
+
+
+def _verify_weights(model_dir: Path) -> None:
+    """Verify weight file integrity; a corrupt file is deleted so the next
+    run re-downloads it (guards against interrupted/resumed downloads)."""
+    import hashlib
+
+    expected = _expected_sha256()
+    for name, want in expected.items():
+        path = Path(model_dir) / name
+        if not path.exists():
+            continue  # snapshot_download will fetch it
+        h = hashlib.sha256()
+        with open(path, "rb") as fh:
+            for chunk in iter(lambda: fh.read(1 << 22), b""):
+                h.update(chunk)
+        if h.hexdigest() != want:
+            path.unlink()
+            raise RuntimeError(
+                f"Weight file {name} failed its integrity check and was removed. "
+                "Start the app again to re-download it."
+            )
+
+
 class _ProgressTqdm(tqdm):  # type: ignore[misc, valid-type]
     """tqdm subclass that aggregates every active bar into one callback.
 
@@ -142,5 +176,6 @@ def download_model(
         raise RuntimeError(
             "Download finished but config.json is missing; the model folder is incomplete."
         )
+    _verify_weights(model_dir)
     _write_marker(model_dir)
     return model_dir

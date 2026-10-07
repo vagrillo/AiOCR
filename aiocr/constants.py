@@ -37,6 +37,11 @@ MODEL_DOWNLOAD_NEEDED_GB = 9.0
 
 PRECISION_CHOICES = ["auto", "4bit", "8bit", "16bit", "32bit"]
 
+# bitsandbytes quantizes only the language-model Linears. The vision tower
+# (SAM ViT-B + CLIP-L), the projector and the embeddings are extremely
+# sensitive to weight quantization and must stay in half precision.
+BNB_SKIP_MODULES = ["sam_model", "vision_model", "projector", "embed_tokens", "lm_head"]
+
 import sys
 from pathlib import Path
 

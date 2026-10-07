@@ -18,6 +18,7 @@ from typing import Callable, List, Optional, Tuple
 from .constants import (
     AUTO_4BIT_VRAM_THRESHOLD_GB,
     AUTO_8BIT_VRAM_THRESHOLD_GB,
+    BNB_SKIP_MODULES,
 )
 
 # Reduce fragmentation with 8-bit weights; must be set before CUDA context init.
@@ -172,7 +173,9 @@ class Engine:
         )
         if runtime.quantization == "8-bit":
             status("Loading model with 8-bit quantization (bitsandbytes)...")
-            load_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
+            load_kwargs["quantization_config"] = BitsAndBytesConfig(
+                load_in_8bit=True, llm_int8_skip_modules=BNB_SKIP_MODULES
+            )
             load_kwargs["device_map"] = {"": runtime.device}
         elif runtime.quantization == "4-bit":
             status("Loading model with 4-bit NF4 quantization (bitsandbytes)...")
@@ -181,6 +184,7 @@ class Engine:
                 bnb_4bit_quant_type="nf4",
                 bnb_4bit_use_double_quant=True,
                 bnb_4bit_compute_dtype=runtime.dtype,
+                llm_int8_skip_modules=BNB_SKIP_MODULES,
             )
             load_kwargs["device_map"] = {"": runtime.device}
         else:

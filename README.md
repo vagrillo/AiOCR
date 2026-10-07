@@ -31,15 +31,19 @@ then loads it on the best available backend.
 
 | Platform | Backend | Precision | Notes |
 |---|---|---|---|
-| Windows / Linux + NVIDIA (RTX 20xx+) | CUDA | bf16 | default `pip` wheels |
-| Windows / Linux + NVIDIA (GTX 10xx/16xx, 4 GB cards) | CUDA | **8-bit (bitsandbytes)** | fits the ~3B model into 4 GB VRAM; use `requirements-cuda-legacy.txt` |
-| Apple Silicon (M1/M2/M3/**M4**) | MPS | fp16 | native macOS wheels |
+| Windows / Linux + NVIDIA (8 GB+, RTX 20xx+) | CUDA | bf16/fp16 | full precision, best quality |
+| Windows / Linux + NVIDIA (6-8 GB) | CUDA | 8-bit (bitsandbytes) | LLM quantized, vision encoder fp16 |
+| Windows / Linux + NVIDIA (4-5 GB, e.g. GTX 10xx) | CUDA | **4-bit NF4** | fits 4 GB VRAM; some quality loss vs 8-bit; use `requirements-cuda-legacy.txt` |
+| Apple Silicon (M1/M2/M3/**M4**) | MPS | fp16 | native macOS wheels, unified memory |
 | Any machine | CPU | bf16/fp32 | slow fallback |
 
-The backend is auto-detected at startup and shown in the UI. With `Precision:
-Auto` the app enables 8-bit quantization automatically on GPUs with 6 GB of
-VRAM or less; you can force it from the settings combo (`8-bit - fits 4 GB
-GPUs`). Changing the precision takes effect on the next application start.
+Only the language model is quantized - the SAM/CLIP vision tower, the
+projector and the embeddings always stay in half precision because they are
+sensitive to weight quantization. The backend is auto-detected at startup and
+shown in the UI. With `Precision: Auto` the app enables 4-bit NF4 on GPUs
+with 5 GB of VRAM or less and 8-bit up to 7 GB; you can force a mode from the
+settings combo. Changing the precision takes effect on the next application
+start.
 
 ## Install and run from source
 
@@ -68,8 +72,10 @@ downloaded on first start into:
 ```
 
 The download is **resumable** - if it is interrupted, simply start the app
-again. To store the model elsewhere, the app will ask you automatically when
-the disk is short on space, or set:
+again. After the download every weight file is verified against its SHA-256
+checksum, so a corrupted download is always detected and re-fetched. To store
+the model elsewhere, the app will ask you automatically when the disk is
+short on space, or set:
 
 ```bash
 export AIOCR_MODEL_DIR=/path/to/models/Unlimited-OCR   # optional override
@@ -127,8 +133,9 @@ Continuous Integration builds both platforms on every push (see
 - **Density (DPI)** - resolution used to rasterize PDF pages before OCR.
   200 DPI is a good default; use 300 DPI for small print, 96-150 DPI for
   speed on large documents.
-- **Precision** - `8-bit` quantization (bitsandbytes) is what makes the model
-  fit on 4 GB NVIDIA GPUs; `Auto` picks it for you on small-VRAM cards.
+- **Precision** - `4-bit NF4` / `8-bit` quantization (bitsandbytes) makes the
+  model fit on small NVIDIA GPUs; `Auto` picks the mode for you based on the
+  available VRAM.
 - **Page range** - convert only `From..To` pages of long documents.
 
 ## Project layout
@@ -151,7 +158,7 @@ docs/               original project brief
 
 ## Troubleshooting
 
-- **CUDA out of memory** - select `Precision: 8-bit`, lower the DPI, or
+- **CUDA out of memory** - select `Precision: 4-bit`, lower the DPI, or
   convert fewer pages at a time.
 - **GTX 10xx/16xx GPUs** - install `requirements-cuda-legacy.txt`
   (CUDA 12.6 wheels); recent CUDA 12.8+ wheels dropped Pascal support.
